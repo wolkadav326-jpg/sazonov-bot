@@ -2,27 +2,62 @@ import os
 import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiohttp import web
 import edge_tts
 
-# Инициализация бота
+# -------------------------------------------------------------------
+# ВСТАВЬТЕ СЮДА ВАШ TELEGRAM ID (числа без кавычек)
+# -------------------------------------------------------------------
+MY_CHAT_ID = 000000000  # Замените 000000000 на ваш ID от @userinfobot
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Главное меню с кнопками
+# -------------------------------------------------------------------
+# СОСТОЯНИЯ (FSM) ДЛЯ СБОРА ЗАЯВКИ
+# -------------------------------------------------------------------
+class BookingState(StatesGroup):
+    waiting_for_name = State()
+    waiting_for_category = State()
+    waiting_for_phone = State()
+    waiting_for_issue = State()
+
+# -------------------------------------------------------------------
+# КЛАВИАТУРЫ
+# -------------------------------------------------------------------
 def get_main_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🧠 Гипнотерапия", callback_data="hypno")],
         [InlineKeyboardButton(text="🧘‍♂️ Кармакоррекция", callback_data="karma")],
         [InlineKeyboardButton(text="🧘‍♀️ Космическая йога", callback_data="yoga")],
-        [InlineKeyboardButton(text="👥 Групповые сеансы", callback_data="group")]
+        [InlineKeyboardButton(text="👥 Групповые сеансы", callback_data="group")],
+        [InlineKeyboardButton(text="✍️ Записаться на сеанс", callback_data="start_booking")]
     ])
 
-# Команда /start
+def get_back_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✍️ Записаться на сеанс", callback_data="start_booking")],
+        [InlineKeyboardButton(text="⬅️ Назад в меню", callback_data="back_to_main")]
+    ])
+
+def get_category_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🧠 Гипнотерапия", callback_data="cat_hypno")],
+        [InlineKeyboardButton(text="🧘‍♂️ Кармакоррекция", callback_data="cat_karma")],
+        [InlineKeyboardButton(text="🧘‍♀️ Космическая йога", callback_data="cat_yoga")],
+        [InlineKeyboardButton(text="👥 Групповой сеанс", callback_data="cat_group")]
+    ])
+
+# -------------------------------------------------------------------
+# /START И НАВИГАЦИЯ
+# -------------------------------------------------------------------
 @dp.message(CommandStart())
-async def start_cmd(message: types.Message):
+async def start_cmd(message: types.Message, state: FSMContext):
+    await state.clear()
     text = (
         "Здравствуйте! Приветствую вас в персональном ассистенте Александра Сазонова — "
         "сертифицированного гипнотерапевта, мастера Кармакоррекции и Космической йоги.\n\n"
@@ -31,9 +66,72 @@ async def start_cmd(message: types.Message):
     )
     await message.answer(text, reply_markup=get_main_keyboard())
 
-# Обработка нажатий на кнопки (ответ текстом + ГОЛОСОМ)
-@dp.callback_query()
-async def process_callback(callback: CallbackQuery):
+# -------------------------------------------------------------------
+# ПОШАГОВАЯ ЗАПИСЬ (ОПРОСНИК)
+# -------------------------------------------------------------------
+@dp.callback_query(F.data == "start_booking")
+async def start_booking(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(BookingState.waiting_for_name)
+    await callback.message.answer("Шаг 1 из 4: Как к вам обращаться? Напишите ваше имя:")
+    await callback.answer()
+
+@dp.message(BookingState.waiting_for_name)
+async def process_name(message: types.Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await state.set_state(BookingState.waiting_for_category)
+    await message.answer("Шаг 2 из 4: Выберите направление, которое вас интересует:", reply_markup=get_category_keyboard())
+
+@dp.callback_query(BookingState.waiting_for_category, F.data.startswith("cat_"))
+async def process_category(callback: CallbackQuery, state: FSMContext):
+    categories = {
+        "cat_hypno": "Гипнотерапия",
+        "cat_karma": "Кармакоррекция",
+        "cat_yoga": "Космическая йога",
+        "cat_group": "Групповые сеансы"
+    }
+    selected_cat = categories.get(callback.data, "Не указано")
+    await state.update_data(category=selected_cat)
+    await state.set_state(BookingState.waiting_for_phone)
+    
+    await callback.message.answer("Шаг 3 из 4: Напишите ваш номер телефона или Никнейм в Telegram для связи:")
+    await callback.answer()
+
+@dp.message(BookingState.waiting_for_phone)
+async def process_phone(message: types.Message, state: FSMContext):
+    await state.update_data(phone=message.text)
+    await state.set_state(BookingState.waiting_for_issue)
+    await message.answer("Шаг 4 из 4: Вкратце опишите ваш запрос или проблему, с которой хотите обратиться:")
+
+@dp.message(BookingState.waiting_for_issue)
+async def process_issue(message: types.Message, state: FSMContext):
+    await state.update_data(issue=message.text)
+    user_data = await state.get_data()
+    
+    # Ответ клиенту
+    await message.answer("Благодарим! Ваша заявка успешно отправлена Александру. Он свяжется с вами в ближайшее время.", reply_markup=get_main_keyboard())
+
+    # Отправка заявки МАСТЕРУ
+    if MY_CHAT_ID != 000000000:
+        admin_text = (
+            "📥 **НОВАЯ ЗАЯВКА НА СЕАНС!**\n\n"
+            f"👤 **Имя:** {user_data.get('name')}\n"
+            f"🎯 **Направление:** {user_data.get('category')}\n"
+            f"📞 **Контакт:** {user_data.get('phone')}\n"
+            f"💬 **Запрос:** {user_data.get('issue')}\n"
+            f"🔗 **Профиль:** @{message.from_user.username if message.from_user.username else 'нет юзернейма'}"
+        )
+        try:
+            await bot.send_message(chat_id=MY_CHAT_ID, text=admin_text, parse_mode="Markdown")
+        except Exception as e:
+            print(f"Ошибка отправки уведомления: {e}")
+
+    await state.clear()
+
+# -------------------------------------------------------------------
+# ИНФОРМАЦИЯ О НАПРАВЛЕНИЯХ (ОТВЕТ ТЕКСТОМ И ГОЛОСОМ)
+# -------------------------------------------------------------------
+@dp.callback_query(F.data.in_({"hypno", "karma", "yoga", "group"}))
+async def process_info_callbacks(callback: CallbackQuery):
     responses = {
         "hypno": "Гипнотерапия помогает бережно проработать внутренние блоки, тревоги и подсознательные установки.",
         "karma": "Кармакоррекция направлена на выявление и устранение причин повторяющихся жизненных трудностей.",
@@ -42,26 +140,35 @@ async def process_callback(callback: CallbackQuery):
     }
 
     reply_text = responses.get(callback.data, "Информация обновляется.")
-    
-    # Отправляем текстовый ответ
-    await callback.message.answer(reply_text)
+    await callback.message.answer(reply_text, reply_markup=get_back_keyboard())
 
-    # Генерация нейро-голоса (Edge-TTS)
+    # Озвучка
     voice_file = f"voice_{callback.from_user.id}.mp3"
     communicate = edge_tts.Communicate(reply_text, "ru-RU-DmitryNeural")
     await communicate.save(voice_file)
 
-    # Отправка голосового сообщения
     voice_input = types.FSInputFile(voice_file)
     await callback.message.answer_voice(voice_input)
 
-    # Удаляем временный аудиофайл
     if os.path.exists(voice_file):
         os.remove(voice_file)
 
     await callback.answer()
 
-# Веб-сервер для поддержания работы на Render
+@dp.callback_query(F.data == "back_to_main")
+async def process_back(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    text = (
+        "Здравствуйте! Приветствую вас в персональном ассистенте Александра Сазонова — "
+        "сертифицированного гипнотерапевта, мастера Кармакоррекции и Космической йоги.\n\n"
+        "Выберите направление ниже:"
+    )
+    await callback.message.answer(text, reply_markup=get_main_keyboard())
+    await callback.answer()
+
+# -------------------------------------------------------------------
+# СЕРВЕР RENDER
+# -------------------------------------------------------------------
 async def handle(request):
     return web.Response(text="Bot is running!")
 
@@ -75,8 +182,10 @@ async def main():
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
 
-    # Запуск поллинга бота
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+
