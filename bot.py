@@ -9,7 +9,7 @@ from aiohttp import web
 import edge_tts
 
 # Вставьте ваш Telegram ID (число без кавычек)
-MY_CHAT_ID = 000000000  # Замените на ваш ID от @userinfobot
+MY_CHAT_ID = 1675177350 # Замените на ваш ID от @userinfobot
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
@@ -35,6 +35,7 @@ def get_main_keyboard():
         [InlineKeyboardButton(text="👥 Групповые сеансы", callback_data="group")],
         [InlineKeyboardButton(text="⭐ Отзывы клиентов", callback_data="reviews")],
         [InlineKeyboardButton(text="💳 Стоимость и оплата", callback_data="pricing")],
+        [InlineKeyboardButton(text="🎵 Мой TikTok", url="https://www.tiktok.com/@your_tiktok_username")],
         [InlineKeyboardButton(text="✍️ Записаться на сеанс", callback_data="start_booking")]
     ])
 
@@ -61,7 +62,7 @@ async def start_cmd(message: types.Message, state: FSMContext):
     text = (
         "Здравствуйте! Приветствую вас в персональном ассистенте Александра Сазонова — "
         "сертифицированного гипнотерапевта, мастера Кармакоррекции и Космической йоги.\n\n"
-        "Я помогу вам узнать подробности о практиках, ознакомиться с отзывами и записаться на сеанс.\n\n"
+        "Я помогу вам узнать подробности о практиках, ознакомиться с прайсом и записаться на сеанс.\n\n"
         "Выберите интересующий раздел ниже:"
     )
     await message.answer(text, reply_markup=get_main_keyboard())
@@ -107,7 +108,7 @@ async def process_issue(message: types.Message, state: FSMContext):
     await state.update_data(issue=message.text)
     user_data = await state.get_data()
     
-    await message.answer("Благодарим! Ваша заявка успешно отправлена Александру. Он свяжется с вами в ближайшее время.", reply_markup=get_main_keyboard())
+    await message.answer("Благодарим! Ваша заявка успешно отправлена Александру. Он свяжется с вами в ближайшее время для согласования времени и деталей оплаты.", reply_markup=get_main_keyboard())
 
     if MY_CHAT_ID != 000000000:
         admin_text = (
@@ -132,9 +133,9 @@ async def process_issue(message: types.Message, state: FSMContext):
 async def process_reviews(callback: CallbackQuery):
     text = (
         "⭐ **Отзывы и результаты клиентов**\n\n"
-        "Здесь вы можете ознакомиться с реальными историями изменений, "
-        "отзывами после индивидуальных сеансов гипнотерапии, кармакоррекции и групповых практик.\n\n"
-        "💬 *Вы можете указать ссылку на ваш канал с отзывами или вставить тексты отзывов прямо сюда.*"
+        "Здесь вы можете ознакомиться с реальными историями изменений "
+        "и результатами моих клиентов после индивидуальных и групповых сеансов.\n\n"
+        "Переходите в наш профиль и смотри видео-отзывы!"
     )
     await callback.message.answer(text, parse_mode="Markdown", reply_markup=get_back_keyboard())
     await callback.answer()
@@ -142,13 +143,16 @@ async def process_reviews(callback: CallbackQuery):
 @dp.callback_query(F.data == "pricing")
 async def process_pricing(callback: CallbackQuery):
     text = (
-        "💳 **Стоимость услуг и оплата**\n\n"
-        "• **Первичная консультация / диагностика:** (укажите сумму)\n"
-        "• **Индивидуальный сеанс гипнотерапии:** (укажите сумму)\n"
-        "• **Сеанс Кармакоррекции:** (укажите сумму)\n"
-        "• **Групповые сеансы / Космическая йога:** (укажите сумму)\n\n"
-        "📌 *Способы оплаты:* Zelle / Карта / Перевод.\n"
-        "После согласования времени сеанса детали оплаты отправляются лично."
+        "💳 **Стоимость практик и сеансов**\n\n"
+        "🧘‍♀️ **Космическая йога:** €25 / сеанс\n\n"
+        "🧠 **Гипнотерапия:**\n"
+        "• 1 сессия — €350\n"
+        "• Курс из 5 сессий — €1750\n\n"
+        "🧘‍♂️ **Кармакоррекция:**\n"
+        "• Комплексный курс (8 сеансов) — €1200\n\n"
+        "📌 **Способы оплаты:**\n"
+        "Принимаются PayPal, Zelle, банковские переводы и карты.\n"
+        "_Реквизиты и подтверждение бронирования предоставляются персонально мастеру после отправки заявки._"
     )
     await callback.message.answer(text, parse_mode="Markdown", reply_markup=get_back_keyboard())
     await callback.answer()
@@ -212,6 +216,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
