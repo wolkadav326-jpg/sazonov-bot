@@ -107,19 +107,26 @@ async def command_start_handler(message: Message):
     )
 
 
+# ОБРАБОТЧИК ПОДАРКА
 @dp.callback_query(F.data == "gift_practice")
 async def send_gift_practice(callback: CallbackQuery):
-    audio_file = FSInputFile("gift.m4a")
-    caption_text = (
-        "🎁 <b>Ваш подарок: Практика «Перезагрузка подсознания за 5 минут»</b>\n\n"
-        "Нажмите на аудиозапись ниже, закройте глаза и выделите 5 минут "
-        "для снятия стресса и блоков в теле.\n\n"
-        "🎧 <i>Рекомендуется слушать в наушниках и в спокойной обстановке.</i>"
-    )
-    await callback.message.answer_audio(
-        audio=audio_file, caption=caption_text, parse_mode="HTML"
-    )
-    await callback.answer()
+    await callback.answer("Загружаем аудиопрактику...")
+    try:
+        audio_file = FSInputFile("gift.m4a", filename="gift.m4a")
+        caption_text = (
+            "🎁 <b>Ваш подарок: Практика «Перезагрузка подсознания за 5 минут»</b>\n\n"
+            "Нажмите на аудиозапись ниже, закройте глаза и выделите 5 минут "
+            "для снятия стресса и блоков в теле.\n\n"
+            "🎧 <i>Рекомендуется слушать в наушниках и в спокойной обстановке.</i>"
+        )
+        await callback.message.answer_audio(
+            audio=audio_file, caption=caption_text, parse_mode="HTML"
+        )
+    except Exception as e:
+        logging.error(f"Ошибка при отправке аудио: {e}")
+        await callback.message.answer(
+            "⚠️ Не удалось загрузить файл `gift.m4a`. Убедитесь, что файл с таким именем загружен на GitHub."
+        )
 
 
 @dp.callback_query(F.data == "hypno")
@@ -235,4 +242,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
