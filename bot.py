@@ -55,7 +55,23 @@ async def process_callback(callback: types.CallbackQuery):
         
     await callback.answer()
 
+import os
+from aiohttp import web
+
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+app = web.Application()
+app.router.add_get("/", handle)
+
 async def main():
+    port = int(os.environ.get("PORT", 8080))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    
+    # Запуск бота
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
