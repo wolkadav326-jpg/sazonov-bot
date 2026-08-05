@@ -2,16 +2,14 @@ import os
 import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiohttp import web
 import edge_tts
 
-# -------------------------------------------------------------------
-# ВСТАВЬТЕ СЮДА ВАШ TELEGRAM ID (числа без кавычек)
-# -------------------------------------------------------------------
-MY_CHAT_ID = 1675177350 # Замените 000000000 на ваш ID от @userinfobot
+# Вставьте ваш Telegram ID (число без кавычек)
+MY_CHAT_ID = 000000000  # Замените на ваш ID от @userinfobot
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
@@ -35,6 +33,8 @@ def get_main_keyboard():
         [InlineKeyboardButton(text="🧘‍♂️ Кармакоррекция", callback_data="karma")],
         [InlineKeyboardButton(text="🧘‍♀️ Космическая йога", callback_data="yoga")],
         [InlineKeyboardButton(text="👥 Групповые сеансы", callback_data="group")],
+        [InlineKeyboardButton(text="⭐ Отзывы клиентов", callback_data="reviews")],
+        [InlineKeyboardButton(text="💳 Стоимость и оплата", callback_data="pricing")],
         [InlineKeyboardButton(text="✍️ Записаться на сеанс", callback_data="start_booking")]
     ])
 
@@ -61,8 +61,8 @@ async def start_cmd(message: types.Message, state: FSMContext):
     text = (
         "Здравствуйте! Приветствую вас в персональном ассистенте Александра Сазонова — "
         "сертифицированного гипнотерапевта, мастера Кармакоррекции и Космической йоги.\n\n"
-        "Я помогу вам узнать подробности о практиках и записаться на консультацию или сеанс.\n\n"
-        "Выберите направление ниже:"
+        "Я помогу вам узнать подробности о практиках, ознакомиться с отзывами и записаться на сеанс.\n\n"
+        "Выберите интересующий раздел ниже:"
     )
     await message.answer(text, reply_markup=get_main_keyboard())
 
@@ -107,10 +107,8 @@ async def process_issue(message: types.Message, state: FSMContext):
     await state.update_data(issue=message.text)
     user_data = await state.get_data()
     
-    # Ответ клиенту
     await message.answer("Благодарим! Ваша заявка успешно отправлена Александру. Он свяжется с вами в ближайшее время.", reply_markup=get_main_keyboard())
 
-    # Отправка заявки МАСТЕРУ
     if MY_CHAT_ID != 000000000:
         admin_text = (
             "📥 **НОВАЯ ЗАЯВКА НА СЕАНС!**\n\n"
@@ -126,6 +124,34 @@ async def process_issue(message: types.Message, state: FSMContext):
             print(f"Ошибка отправки уведомления: {e}")
 
     await state.clear()
+
+# -------------------------------------------------------------------
+# ОПЛАТА И ОТЗЫВЫ
+# -------------------------------------------------------------------
+@dp.callback_query(F.data == "reviews")
+async def process_reviews(callback: CallbackQuery):
+    text = (
+        "⭐ **Отзывы и результаты клиентов**\n\n"
+        "Здесь вы можете ознакомиться с реальными историями изменений, "
+        "отзывами после индивидуальных сеансов гипнотерапии, кармакоррекции и групповых практик.\n\n"
+        "💬 *Вы можете указать ссылку на ваш канал с отзывами или вставить тексты отзывов прямо сюда.*"
+    )
+    await callback.message.answer(text, parse_mode="Markdown", reply_markup=get_back_keyboard())
+    await callback.answer()
+
+@dp.callback_query(F.data == "pricing")
+async def process_pricing(callback: CallbackQuery):
+    text = (
+        "💳 **Стоимость услуг и оплата**\n\n"
+        "• **Первичная консультация / диагностика:** (укажите сумму)\n"
+        "• **Индивидуальный сеанс гипнотерапии:** (укажите сумму)\n"
+        "• **Сеанс Кармакоррекции:** (укажите сумму)\n"
+        "• **Групповые сеансы / Космическая йога:** (укажите сумму)\n\n"
+        "📌 *Способы оплаты:* Zelle / Карта / Перевод.\n"
+        "После согласования времени сеанса детали оплаты отправляются лично."
+    )
+    await callback.message.answer(text, parse_mode="Markdown", reply_markup=get_back_keyboard())
+    await callback.answer()
 
 # -------------------------------------------------------------------
 # ИНФОРМАЦИЯ О НАПРАВЛЕНИЯХ (ОТВЕТ ТЕКСТОМ И ГОЛОСОМ)
