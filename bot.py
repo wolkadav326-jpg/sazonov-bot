@@ -1,5 +1,7 @@
 import logging
 import os
+import asyncio
+from aiohttp import web
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
     Message,
@@ -19,12 +21,28 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # Укажите ваш юзернейм в Telegram без символа @
-YOUR_TELEGRAM_USERNAME = "alex910usa"  # Поменяйте на ваш реальный username
+YOUR_TELEGRAM_USERNAME = "alex910us"
 
 
-# Главное меню с кнопками
+# --- ФЕЙКОВЫЙ ВЕБ-СЕРВЕР ДЛЯ RENDER (чтобы не ругался на порты) ---
+async def handle_ping(request):
+    return web.Response(text="Bot is running!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", handle_ping)
+    app.router.add_get("/health", handle_ping)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.getenv("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logging.info(f"Web server started on port {port}")
+
+
+# --- МЕНЮ И КНОПКИ ---
 def get_main_keyboard():
-    keyboard = InlineKeyboardMarkup(
+    return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
@@ -58,10 +76,8 @@ def get_main_keyboard():
             ],
         ]
     )
-    return keyboard
 
 
-# Кнопка возврата в меню
 def get_back_keyboard():
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -70,7 +86,7 @@ def get_back_keyboard():
     )
 
 
-# Старт бота
+# --- ОБРАБОТЧИКИ КОМАНД И КНОПОК ---
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
     welcome_text = (
@@ -86,7 +102,6 @@ async def command_start_handler(message: Message):
     )
 
 
-# Обработчик кнопки "🎁 Бесплатная практика"
 @dp.callback_query(F.data == "gift_practice")
 async def send_gift_practice(callback: CallbackQuery):
     audio_file = FSInputFile("gift.m4a")
@@ -102,7 +117,6 @@ async def send_gift_practice(callback: CallbackQuery):
     await callback.answer()
 
 
-# 🧠 Гипнотерапия
 @dp.callback_query(F.data == "hypno")
 async def hypno_info(callback: CallbackQuery):
     text = (
@@ -121,7 +135,6 @@ async def hypno_info(callback: CallbackQuery):
     await callback.answer()
 
 
-# 🧘‍♂️ Кармакоррекция
 @dp.callback_query(F.data == "karma")
 async def karma_info(callback: CallbackQuery):
     text = (
@@ -139,7 +152,6 @@ async def karma_info(callback: CallbackQuery):
     await callback.answer()
 
 
-# 🧘‍♀️ Космическая йога & Чаши
 @dp.callback_query(F.data == "yoga_sound")
 async def yoga_sound_info(callback: CallbackQuery):
     text = (
@@ -157,7 +169,6 @@ async def yoga_sound_info(callback: CallbackQuery):
     await callback.answer()
 
 
-# 👥 Групповые сеансы
 @dp.callback_query(F.data == "group_sessions")
 async def group_info(callback: CallbackQuery):
     text = (
@@ -175,7 +186,6 @@ async def group_info(callback: CallbackQuery):
     await callback.answer()
 
 
-# ✍️ Запись на сеанс
 @dp.callback_query(F.data == "book_session")
 async def book_session_info(callback: CallbackQuery):
     kb = InlineKeyboardMarkup(
@@ -202,22 +212,23 @@ async def book_session_info(callback: CallbackQuery):
     await callback.answer()
 
 
-# Назад в главное меню
 @dp.callback_query(F.data == "main_menu")
 async def back_to_main(callback: CallbackQuery):
-    welcome_text = (
-        "Выберите интересующий вас раздел или практику:"
-    )
+    welcome_text = "Выберите интересующий вас раздел или практику:"
     await callback.message.edit_text(
         text=welcome_text, reply_markup=get_main_keyboard(), parse_mode="HTML"
     )
     await callback.answer()
 
 
-# Запуск бота
-if __name__ == "__main__":
-    import asyncio
+# --- ЗАПУСК ---
+async def main():
+    # Запускаем веб-сервер для обхода проверки портов Render
+    await start_web_server()
+    # Запускаем бота
+    await dp.start_polling(bot)
 
-    asyncio.run(dp.start_polling(bot))
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
