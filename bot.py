@@ -35,7 +35,7 @@ def get_main_keyboard():
         [InlineKeyboardButton(text="👥 Групповые сеансы", callback_data="group")],
         [InlineKeyboardButton(text="⭐ Отзывы клиентов", callback_data="reviews")],
         [InlineKeyboardButton(text="💳 Стоимость и оплата", callback_data="pricing")],
-        [InlineKeyboardButton(text="🎵 Мой TikTok", url="https://www.tiktok.com/@alexandr27678")],
+        [InlineKeyboardButton(text="🎵 Мой TikTok", url="https://www.tiktok.com/@alexandr27678")],      
         [InlineKeyboardButton(text="✍️ Записаться на сеанс", callback_data="start_booking")]
     ])
 
