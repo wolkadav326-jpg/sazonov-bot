@@ -1,16 +1,16 @@
+import asyncio
 import logging
 import os
-import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import (
-    Message,
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-    FSInputFile,
-)
 from aiogram.filters import CommandStart
+from aiogram.types import (
+    CallbackQuery,
+    FSInputFile,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -20,13 +20,14 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# Укажите ваш юзернейм в Telegram без символа @
+# Юзернейм в Telegram без символа @
 YOUR_TELEGRAM_USERNAME = "alex910usa"
 
 
-# --- ФЕЙКОВЫЙ ВЕБ-СЕРВЕР ДЛЯ RENDER (чтобы не ругался на порты) ---
+# --- ВЕБ-СЕРВЕР ДЛЯ RENDER ---
 async def handle_ping(request):
     return web.Response(text="Bot is running!")
+
 
 async def start_web_server():
     app = web.Application()
@@ -47,31 +48,31 @@ def get_main_keyboard():
             [
                 InlineKeyboardButton(
                     text="🎁 Бесплатная практика (5 мин)",
-                    callback_query_data="gift_practice",
+                    callback_data="gift_practice",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="🧠 Гипнотерапия", callback_query_data="hypno"
+                    text="🧠 Гипнотерапия", callback_data="hypno"
                 ),
                 InlineKeyboardButton(
-                    text="🧘‍♂️ Кармакоррекция", callback_query_data="karma"
+                    text="🧘‍♂️ Кармакоррекция", callback_data="karma"
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text="🧘‍♀️ Космическая йога & Чаши",
-                    callback_query_data="yoga_sound",
+                    callback_data="yoga_sound",
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="👥 Групповые сеансы", callback_query_data="group_sessions"
+                    text="👥 Групповые сеансы", callback_data="group_sessions"
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="✍️ Записаться на сеанс", callback_query_data="book_session"
+                    text="✍️ Записаться на сеанс", callback_data="book_session"
                 )
             ],
         ]
@@ -81,7 +82,11 @@ def get_main_keyboard():
 def get_back_keyboard():
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="◀️ Назад в меню", callback_query_data="main_menu")]
+            [
+                InlineKeyboardButton(
+                    text="◀️ Назад в меню", callback_data="main_menu"
+                )
+            ]
         ]
     )
 
@@ -91,8 +96,8 @@ def get_back_keyboard():
 async def command_start_handler(message: Message):
     welcome_text = (
         f"Здравствуйте, <b>{message.from_user.first_name}</b>!\n\n"
-        "Рад приветствовать вас. Я — Александр Сазонов, сертифицированный гипнотерапевт "
-        "и энергопрактик.\n\n"
+        "Рад приветствовать вас. Я — Александр Сазонов, сертифицированный "
+        "гипнотерапевт и энергопрактик.\n\n"
         "Я помогаю освободиться от внутренних блоков, тревоги, психосоматики, "
         "восстановить жизненную энергию и гармонию.\n\n"
         "Заберите ваш подарок ниже или выберите интересующее направление:"
@@ -106,7 +111,8 @@ async def command_start_handler(message: Message):
 async def send_gift_practice(callback: CallbackQuery):
     audio_file = FSInputFile("gift.m4a")
     caption_text = (
-        "🎁 <b>Ваш подарок: Практика «Перезагрузка подсознания за 5 минут»</b>\n\n"
+        "🎁 <b>Ваш подарок: Практика «Перезагрузка подсознания за 5"
+        " минут»</b>\n\n"
         "Нажмите на аудиозапись ниже, закройте глаза и выделите 5 минут "
         "для снятия стресса и блоков в теле.\n\n"
         "🎧 <i>Рекомендуется слушать в наушниках и в спокойной обстановке.</i>"
@@ -198,15 +204,16 @@ async def book_session_info(callback: CallbackQuery):
             ],
             [
                 InlineKeyboardButton(
-                    text="◀️ Назад в меню", callback_query_data="main_menu"
+                    text="◀️ Назад в меню", callback_data="main_menu"
                 )
             ],
         ]
     )
     text = (
         "✍️ <b>Запись на консультацию и сеансы</b>\n\n"
-        "Чтобы записаться на индивидуальный или групповой сеанс, задать вопрос "
-        "или подобрать удобное время — нажмите кнопку ниже и напишите мне напрямую:"
+        "Чтобы записаться на индивидуальный или групповой сеанс, задать "
+        "вопрос или подобрать удобное время — нажмите кнопку ниже и "
+        "напишите мне напрямую:"
     )
     await callback.message.edit_text(text=text, reply_markup=kb, parse_mode="HTML")
     await callback.answer()
@@ -223,12 +230,10 @@ async def back_to_main(callback: CallbackQuery):
 
 # --- ЗАПУСК ---
 async def main():
-    # Запускаем веб-сервер для обхода проверки портов Render
     await start_web_server()
-    # Запускаем бота
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
