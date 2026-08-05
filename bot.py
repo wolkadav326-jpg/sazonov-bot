@@ -21,7 +21,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # Укажите ваш юзернейм в Telegram без символа @
-YOUR_TELEGRAM_USERNAME = "alex910us"
+YOUR_TELEGRAM_USERNAME = "alex910usa"
 
 
 # --- ФЕЙКОВЫЙ ВЕБ-СЕРВЕР ДЛЯ RENDER (чтобы не ругался на порты) ---
