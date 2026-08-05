@@ -19,7 +19,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # Укажите ваш юзернейм в Telegram без символа @
-YOUR_TELEGRAM_USERNAME = "sazonov_alexandr"  # Поменяйте на ваш реальный username
+YOUR_TELEGRAM_USERNAME = "alex910usa"  # Поменяйте на ваш реальный username
 
 
 # Главное меню с кнопками
