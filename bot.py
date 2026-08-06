@@ -107,31 +107,35 @@ async def command_start_handler(message: Message):
     )
 
 
-# ОБРАБОТЧИК ПОДАРКА
+# --- ПОДАРOК (АУДИОФАЙЛ) ---
 @dp.callback_query(F.data == "gift_practice")
 async def send_gift_practice(callback: CallbackQuery):
     await callback.answer("Загружаем аудиопрактику...")
     try:
         audio_file = FSInputFile("gift.m4a", filename="gift.m4a")
         caption_text = (
-            "🎁 <b>Ваш подарок: Практика «Перезагрузка подсознания за 5 минут»</b>\n\n"
+            "🎁 <b>Ваш подарок: Практика «Перезагрузка подсознания за 5"
+            " минут»</b>\n\n"
             "Нажмите на аудиозапись ниже, закройте глаза и выделите 5 минут "
             "для снятия стресса и блоков в теле.\n\n"
-            "🎧 <i>Рекомендуется слушать в наушниках и в спокойной обстановке.</i>"
+            "🎧 <i>Рекомендуется слушать в наушниках и в спокойной"
+            " обстановке.</i>"
         )
         await callback.message.answer_audio(
             audio=audio_file, caption=caption_text, parse_mode="HTML"
         )
     except Exception as e:
-        logging.error(f"Ошибка при отправке аудио: {e}")
+        logging.error(f"Ошибка при отправке аудио подарка: {e}")
         await callback.message.answer(
-            "⚠️ Не удалось загрузить файл `gift.m4a`. Убедитесь, что файл с таким именем загружен на GitHub."
+            "⚠️ Не удалось загрузить gift.m4a. Проверьте файл на GitHub."
         )
 
 
+# --- ГИПНОТЕРАПИЯ ---
 @dp.callback_query(F.data == "hypno")
 async def hypno_info(callback: CallbackQuery):
-    text = (
+    await callback.answer("Загружаем описание...")
+    caption_text = (
         "🧠 <b>Сеансы гипнотерапии</b>\n\n"
         "Глубокая индивидуальная работа с подсознанием для устранения "
         "внутренних ограничений, психосоматических проявлений и страхов.\n\n"
@@ -141,15 +145,27 @@ async def hypno_info(callback: CallbackQuery):
         "⏳ <b>Длительность:</b> 1.5 – 2 часа\n"
         "📌 <b>Формат:</b> Онлайн или очно"
     )
-    await callback.message.edit_text(
-        text=text, reply_markup=get_back_keyboard(), parse_mode="HTML"
-    )
-    await callback.answer()
+    try:
+        audio_file = FSInputFile("hypno.m4a", filename="hypno.m4a")
+        await callback.message.answer_audio(
+            audio=audio_file,
+            caption=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        await callback.message.edit_text(
+            text=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
 
 
+# --- КАРМАКОРРЕКЦИЯ ---
 @dp.callback_query(F.data == "karma")
 async def karma_info(callback: CallbackQuery):
-    text = (
+    await callback.answer("Загружаем описание...")
+    caption_text = (
         "🧘‍♂️ <b>Сеансы Кармакоррекции</b>\n\n"
         "Метод проработки повторяющихся жизненных сценариев, родовых программ "
         "и энергетических зажимов.\n\n"
@@ -158,15 +174,27 @@ async def karma_info(callback: CallbackQuery):
         "• Гармонизация ключевых сфер жизни\n\n"
         "⏳ <b>Длительность:</b> 1.5 часа"
     )
-    await callback.message.edit_text(
-        text=text, reply_markup=get_back_keyboard(), parse_mode="HTML"
-    )
-    await callback.answer()
+    try:
+        audio_file = FSInputFile("karma.m4a", filename="karma.m4a")
+        await callback.message.answer_audio(
+            audio=audio_file,
+            caption=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        await callback.message.edit_text(
+            text=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
 
 
+# --- КОСМИЧЕСКАЯ ЙОГА & ЧАШИ ---
 @dp.callback_query(F.data == "yoga_sound")
 async def yoga_sound_info(callback: CallbackQuery):
-    text = (
+    await callback.answer("Загружаем описание...")
+    caption_text = (
         "🧘‍♀️ <b>Космическая йога и Звукотерапия</b>\n\n"
         "Синтез телесно-энергетических практик с погружением в вибрации "
         "планетарных поющих чаш (включая главную чашу Муладхара).\n\n"
@@ -175,15 +203,27 @@ async def yoga_sound_info(callback: CallbackQuery):
         "• Восстановление и наполнение ресурсом\n\n"
         "⏳ <b>Длительность:</b> 1 – 1.5 часа"
     )
-    await callback.message.edit_text(
-        text=text, reply_markup=get_back_keyboard(), parse_mode="HTML"
-    )
-    await callback.answer()
+    try:
+        audio_file = FSInputFile("yoga.m4a", filename="yoga.m4a")
+        await callback.message.answer_audio(
+            audio=audio_file,
+            caption=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        await callback.message.edit_text(
+            text=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
 
 
+# --- ГРУППОВЫЕ СЕАНСЫ ---
 @dp.callback_query(F.data == "group_sessions")
 async def group_info(callback: CallbackQuery):
-    text = (
+    await callback.answer("Загружаем описание...")
+    caption_text = (
         "👥 <b>Групповые практики и сеансы</b>\n\n"
         "Групповая работа создаёт сильное общее энергетическое поле, "
         "усиливающее эффект от медитаций и погружений.\n\n"
@@ -192,12 +232,23 @@ async def group_info(callback: CallbackQuery):
         "• Совместные практики гармонизации\n\n"
         "📅 <i>Анонсы ближайших дат публикуются в канале.</i>"
     )
-    await callback.message.edit_text(
-        text=text, reply_markup=get_back_keyboard(), parse_mode="HTML"
-    )
-    await callback.answer()
+    try:
+        audio_file = FSInputFile("group.m4a", filename="group.m4a")
+        await callback.message.answer_audio(
+            audio=audio_file,
+            caption=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        await callback.message.edit_text(
+            text=caption_text,
+            reply_markup=get_back_keyboard(),
+            parse_mode="HTML",
+        )
 
 
+# --- ЗАПИСЬ НА СЕАНС ---
 @dp.callback_query(F.data == "book_session")
 async def book_session_info(callback: CallbackQuery):
     kb = InlineKeyboardMarkup(
@@ -225,6 +276,7 @@ async def book_session_info(callback: CallbackQuery):
     await callback.answer()
 
 
+# --- ВОЗВРАТ В МЕНЮ ---
 @dp.callback_query(F.data == "main_menu")
 async def back_to_main(callback: CallbackQuery):
     welcome_text = "Выберите интересующий вас раздел или практику:"
@@ -242,5 +294,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
